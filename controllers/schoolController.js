@@ -1,4 +1,4 @@
-// For real face verification onlocal server
+// Simplified school controller without face recognition
 
 const School = require('../models/School');
 const Student = require('../models/Student');
@@ -6,63 +6,13 @@ const XLSX = require('xlsx');
 const path = require('path');
 const fs = require('fs');
 
-// Face-api.js setup
-require('@tensorflow/tfjs-node');
-const faceapi = require('face-api.js');
-const canvas = require('canvas');
-const { Canvas, Image, ImageData } = canvas;
-faceapi.env.monkeyPatch({ Canvas, Image, ImageData });
-
-const MODELS_PATH = path.join(__dirname, '../models/face_models');
-
-async function loadFaceApiModels() {
-  await faceapi.nets.tinyFaceDetector.loadFromDisk(MODELS_PATH);
-  await faceapi.nets.faceLandmark68Net.loadFromDisk(MODELS_PATH);
-  await faceapi.nets.faceRecognitionNet.loadFromDisk(MODELS_PATH);
-}
-
+// Simplified function that doesn't require face recognition
 async function extractGroupDescriptors(imagePath) {
   try {
-    console.log('Loading face detection models...');
-    await loadFaceApiModels();
-    console.log('Models loaded successfully');
-    
-    console.log('Loading image from path:', imagePath);
-    const img = await canvas.loadImage(imagePath);
-    console.log('Image loaded successfully, dimensions:', img.width, 'x', img.height);
-    
-    console.log('Detecting faces with TinyFaceDetector...');
-    const detections = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({
-      inputSize: 512,
-      scoreThreshold: 0.3
-    }))
-    .withFaceLandmarks()
-    .withFaceDescriptors();
-    
-    console.log('Face detection completed. Found', detections.length, 'faces');
-    
-    if (detections.length === 0) {
-      // Try with different parameters
-      console.log('No faces found with default parameters, trying with lower threshold...');
-      const detections2 = await faceapi.detectAllFaces(img, new faceapi.TinyFaceDetectorOptions({
-        inputSize: 256,
-        scoreThreshold: 0.1
-      }))
-      .withFaceLandmarks()
-      .withFaceDescriptors();
-      
-      console.log('Second attempt found', detections2.length, 'faces');
-      
-      if (detections2.length === 0) {
-        throw new Error('No faces detected in the group photo. Please ensure the photo contains clear, visible faces with good lighting and minimal obstructions.');
-      }
-      
-      console.log(`Successfully extracted ${detections2.length} face descriptors from group photo`);
-      return detections2.map(det => Array.from(det.descriptor));
-    }
-    
-    console.log(`Successfully extracted ${detections.length} face descriptors from group photo`);
-    return detections.map(det => Array.from(det.descriptor));
+    console.log('Processing group photo (demo mode - no face recognition)');
+    // Return empty array for demo purposes
+    // In production, this would extract actual face descriptors
+    return [];
   } catch (error) {
     console.error('Error in extractGroupDescriptors:', error);
     throw error;
