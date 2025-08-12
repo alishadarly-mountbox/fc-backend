@@ -5,12 +5,14 @@ require('dotenv').config();
 
 const app = express();
 
-// CORS configuration
+// Updated CORS configuration
 app.use(cors({
     origin: [
-        'https://your-frontend-domain.com',
+        'https://fc-frontend-gxpo.onrender.com',
         'http://localhost:3000'
     ],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
