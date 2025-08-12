@@ -1,12 +1,17 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
 
-// Updated CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
+    process.env.ALLOWED_ORIGINS.split(',') : 
+    ['https://fc-frontend-gxpo.onrender.com', 'http://localhost:3000'];
+
+// CORS configuration
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS.split(','),
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
@@ -31,6 +36,7 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
+// MongoDB connection with error handling
 mongoose.connect(process.env.MONGO_URL)
     .then(() => {
         console.log('Connected to MongoDB');
@@ -38,4 +44,7 @@ mongoose.connect(process.env.MONGO_URL)
             console.log(`Server running on port ${PORT}`);
         });
     })
-    .catch((err) => console.error('MongoDB connection error:', err));
+    .catch((err) => {
+        console.error('MongoDB connection error:', err);
+        process.exit(1);
+    });
