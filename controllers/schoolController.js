@@ -1,4 +1,5 @@
 const School = require('../models/School');
+const cloudinary = require('cloudinary').v2;
 
 const schoolController = {
     getAllSchools: async (req, res) => {
@@ -53,6 +54,27 @@ const schoolController = {
             res.status(200).json({ message: 'School deleted successfully' });
         } catch (error) {
             res.status(500).json({ message: 'Error deleting school', error: error.message });
+        }
+    },
+
+    uploadImage: async (req, res) => {
+        try {
+            if (!req.file) {
+                return res.status(400).json({ message: 'No file uploaded' });
+            }
+
+            const result = await cloudinary.uploader.upload(req.file.path, {
+                folder: 'schools',
+                resource_type: 'auto'
+            });
+
+            res.status(200).json({
+                url: result.secure_url,
+                public_id: result.public_id
+            });
+        } catch (error) {
+            console.error('Upload error:', error);
+            res.status(500).json({ message: 'Error uploading file', error: error.message });
         }
     }
 };
