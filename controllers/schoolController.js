@@ -66,6 +66,16 @@ exports.addSchool = async (req, res) => {
     const schoolName = getCellNormalized(firstRow, ['school', 'schoolname']) || 'Unnamed School';
     const affNo = getCellNormalized(firstRow, ['affno', 'affiliationno']);
 
+    // Check if school already exists
+    const existingSchool = await School.findOne({ name: schoolName });
+    if (existingSchool) {
+      return res.status(400).json({ 
+        message: `School "${schoolName}" already exists in the database.`,
+        existingSchoolId: existingSchool._id,
+        suggestion: 'If you want to add more students, please use the existing school instead.'
+      });
+    }
+
     // Prepare school data
     const schoolData = {
       name: schoolName,
