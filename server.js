@@ -6,9 +6,7 @@ require('dotenv').config();
 
 const app = express();
 
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
-    process.env.ALLOWED_ORIGINS.split(',') : 
-    ['https://fc-frontend-gxpo.onrender.com', 'http://localhost:3000'];
+const allowedOrigins = ['https://fc-frontend-gxpo.onrender.com', 'http://localhost:3000'];
 
 // CORS configuration
 app.use(cors({
@@ -21,14 +19,14 @@ app.use(cors({
 app.use(express.json());
 
 // Verify JWT middleware
-const auth = require('./middleware/auth');
+const auth = require('../middleware/auth');
 app.use('/api/school', auth);  // Protect school routes
 
 // API routes
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/school', require('./routes/school'));
-app.use('/api/student', require('./routes/student'));
-app.use('/api/verification', require('./routes/verification'));
+app.use('/api/auth');
+app.use('/api/school');
+app.use('/api/student');
+app.use('/api/verification');
 
 // Serve static files from the React app
 app.use(express.static(path.join(__dirname, '../frontend/build')));
