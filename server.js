@@ -2,125 +2,38 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
-const path = require('path');
-const fs = require('fs');
-const User = require('./models/User');
-const cloudinary = require('cloudinary').v2;
 
 const app = express();
-const allowedOrigins = [
-  process.env.CLIENT_URL,
-  'https://fe-face-verification-app.onrender.com',
-  'http://localhost:3000'
-].filter(Boolean);
 
-// app.use(cors({
-//   origin: function (origin, callback) {
-//     // Allow requests with no origin (like mobile apps or curl)
-//     if (!origin) return callback(null, true);
-//     if (allowedOrigins.indexOf(origin) === -1) {
-//       const msg = "The CORS policy for this site does not allow access from the specified Origin.";
-//       return callback(new Error(msg), false);
-//     }
-//     return callback(null, true);
-//   },
-//   credentials: true
-// }));
-
-// app.use(cors({
-//   // origin: 'https://fe-face-verification-app.onrender.com',
-//   origin: 'http://localhost:3000',
-//   credentials: true
-// }))
-
-// server.js
+// CORS configuration
 app.use(cors({
-  origin: (origin, callback) => callback(null, true),
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization'],
-  credentials: false
+    origin: [
+        'https://your-frontend-domain.com',
+        'http://localhost:3000'
+    ],
+    credentials: true
 }));
 
-// Handle preflight requests without using path patterns that break path-to-regexp
-app.use((req, res, next) => {
-  if (req.method === 'OPTIONS') {
-    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-    res.header('Vary', 'Origin');
-    res.header('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    return res.sendStatus(204);
-  }
-  next();
-});
-
-
-// Basic request logger to help debug 404s in production
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.originalUrl}`);
-  next();
-});
-
 app.use(express.json());
-// Ensure uploads directory exists for disk storage (supports Render disk via env)
-const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
-app.use('/uploads', express.static(uploadsDir));
 
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
+// Mount routes
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/school', require('./routes/school'));
+app.use('/api/student', require('./routes/student'));
+app.use('/api/verification', require('./routes/verification'));
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok' });
 });
-
-// Import routes
-const authRoutes = require('./routes/auth');
-const schoolRoutes = require('./routes/school');
-const studentRoutes = require('./routes/student');
-const verificationRoutes = require('./routes/verification');
-
-// Mount only under /api to avoid CORS/UI confusion
-app.use('/api/auth', authRoutes);
-app.use('/api/school', schoolRoutes);
-app.use('/api/student', studentRoutes);
-app.use('/api/verification', verificationRoutes);
-
-app.get('/health', (req, res) => res.json({ ok: true }));
-app.get('/api/health', (req, res) => res.json({ ok: true }));
-
-// Removed non-existent upload route
-
 
 const PORT = process.env.PORT || 5000;
 
-// Start server immediately; connect to DB in background to avoid 404 due to startup failures
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-mongoose
-  .connect(process.env.MONGO_URL)
-  .then(async () => {
-    console.log('Connected to MongoDB');
-    try {
-      const adminUsername = process.env.ADMIN_USERNAME;
-      const adminPassword = process.env.ADMIN_PASSWORD;
-      if (adminUsername && adminPassword) {
-        const existing = await User.findOne({ username: adminUsername });
-        if (!existing) {
-          const admin = new User({ username: adminUsername, password: adminPassword });
-          await admin.save();
-          console.log('Default admin user created');
-        } else {
-          console.log('Default admin already exists');
-        }
-      }
-    } catch (seedErr) {
-      console.error('Error seeding admin user:', seedErr);
-    }
-  })
-  .catch((err) => console.error('MongoDB connection error:', err.message));
-
-// 404 handler to make errors explicit
-app.use((req, res) => {
-  res.status(404).json({ message: 'Route not found', path: req.originalUrl });
-});
+mongoose.connect(process.env.MONGO_URL)
+    .then(() => {
+        console.log('Connected to MongoDB');
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    })
+    .catch((err) => console.error('MongoDB connection error:', err));
