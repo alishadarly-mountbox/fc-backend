@@ -1,6 +1,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -23,11 +24,19 @@ app.use(express.json());
 const auth = require('./middleware/auth');
 app.use('/api/school', auth);  // Protect school routes
 
-// Mount routes
+// API routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/school', require('./routes/school'));
 app.use('/api/student', require('./routes/student'));
 app.use('/api/verification', require('./routes/verification'));
+
+// Serve static files from the React app
+app.use(express.static(path.join(__dirname, '../frontend/build')));
+
+// Handle React routing, return all requests to React app
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../frontend/build', 'index.html'));
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
