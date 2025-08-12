@@ -1,97 +1,56 @@
 const School = require('../models/School');
-const cloudinary = require('cloudinary').v2;
 
-// Configure Cloudinary (move these to your .env in production)
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
-// Add new school
-exports.addSchool = async (req, res) => {
-  try {
-    const { name, address, principal, contactNumber } = req.body;
-    let groupPhotoUrl = null;
-
-    // If a file is uploaded, send to Cloudinary
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'school_photos',
-        resource_type: 'image'
-      });
-      groupPhotoUrl = result.secure_url;
+exports.getAllSchools = async (req, res) => {
+    try {
+        const schools = await School.find();
+        res.status(200).json(schools);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching schools', error: error.message });
     }
-
-    const school = new School({
-      name,
-      address,
-      principal,
-      contactNumber,
-      groupPhoto: groupPhotoUrl // store public URL
-    });
-
-    await school.save();
-    res.status(201).json({ message: 'School added successfully', school });
-  } catch (error) {
-    console.error('Error adding school:', error);
-    res.status(500).json({ error: 'Failed to add school' });
-  }
 };
 
-// Get all schools
-exports.getSchools = async (req, res) => {
-  try {
-    const schools = await School.find();
-    res.json(schools);
-  } catch (error) {
-    console.error('Error fetching schools:', error);
-    res.status(500).json({ error: 'Failed to fetch schools' });
-  }
+exports.createSchool = async (req, res) => {
+    try {
+        const school = new School(req.body);
+        await school.save();
+        res.status(201).json(school);
+    } catch (error) {
+        res.status(500).json({ message: 'Error creating school', error: error.message });
+    }
 };
 
-// Update school
+exports.getSchool = async (req, res) => {
+    try {
+        const school = await School.findById(req.params.id);
+        if (!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+        res.status(200).json(school);
+    } catch (error) {
+        res.status(500).json({ message: 'Error fetching school', error: error.message });
+    }
+};
+
 exports.updateSchool = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { name, address, principal, contactNumber } = req.body;
-    let groupPhotoUrl;
-
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: 'school_photos',
-        resource_type: 'image'
-      });
-      groupPhotoUrl = result.secure_url;
+    try {
+        const school = await School.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+        res.status(200).json(school);
+    } catch (error) {
+        res.status(500).json({ message: 'Error updating school', error: error.message });
     }
-
-    const updatedData = {
-      name,
-      address,
-      principal,
-      contactNumber
-    };
-
-    if (groupPhotoUrl) {
-      updatedData.groupPhoto = groupPhotoUrl;
-    }
-
-    const updatedSchool = await School.findByIdAndUpdate(id, updatedData, { new: true });
-    res.json({ message: 'School updated successfully', updatedSchool });
-  } catch (error) {
-    console.error('Error updating school:', error);
-    res.status(500).json({ error: 'Failed to update school' });
-  }
 };
 
-// Delete school
 exports.deleteSchool = async (req, res) => {
-  try {
-    const { id } = req.params;
-    await School.findByIdAndDelete(id);
-    res.json({ message: 'School deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting school:', error);
-    res.status(500).json({ error: 'Failed to delete school' });
-  }
+    try {
+        const school = await School.findByIdAndDelete(req.params.id);
+        if (!school) {
+            return res.status(404).json({ message: 'School not found' });
+        }
+        res.status(200).json({ message: 'School deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error deleting school', error: error.message });
+    }
 };
