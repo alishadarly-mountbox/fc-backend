@@ -1,5 +1,7 @@
 const School = require('../models/School');
 const cloudinary = require('cloudinary').v2;
+const xlsx = require('xlsx');
+const fs = require('fs');
 
 const schoolController = {
     getAllSchools: async (req, res) => {
@@ -13,11 +15,48 @@ const schoolController = {
 
     createSchool: async (req, res) => {
         try {
-            const school = new School(req.body);
+            if (!req.files || !req.files.file) {
+                return res.status(400).json({ message: 'Excel file is required' });
+            }
+
+            let imageUrl = null;
+            if (req.files.image) {
+                const imageResult = await cloudinary.uploader.upload(req.files.image[0].path, {
+                    folder: 'schools',
+                    resource_type: 'image'
+                });
+                imageUrl = imageResult.secure_url;
+                // Clean up uploaded file
+                fs.unlinkSync(req.files.image[0].path);
+            }
+
+            // Process Excel file
+            const workbook = xlsx.readFile(req.files.file[0].path);
+            const sheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[sheetName];
+            const data = xlsx.utils.sheet_to_json(worksheet);
+
+            // Clean up Excel file
+            fs.unlinkSync(req.files.file[0].path);
+
+            const school = new School({
+                name: data[0]?.schoolName || 'Unknown School',
+                students: data.map(row => ({
+                    name: row.studentName,
+                    class: row.class,
+                    // Add other student fields as needed
+                })),
+                groupPhoto: imageUrl
+            });
+
             await school.save();
-            res.status(201).json(school);
+            res.status(201).json({ school });
         } catch (error) {
-            res.status(500).json({ message: 'Error creating school', error: error.message });
+            console.error('School creation error:', error);
+            res.status(500).json({ 
+                message: 'Error creating school', 
+                error: error.message 
+            });
         }
     },
 
