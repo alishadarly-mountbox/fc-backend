@@ -1,5 +1,4 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -7,16 +6,17 @@ const app = express();
 
 // Updated CORS configuration
 app.use(cors({
-    origin: [
-        'https://fc-frontend-gxpo.onrender.com',
-        'http://localhost:3000'
-    ],
+    origin: process.env.ALLOWED_ORIGINS.split(','),
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true
 }));
 
 app.use(express.json());
+
+// Verify JWT middleware
+const auth = require('./middleware/auth');
+app.use('/api/school', auth);  // Protect school routes
 
 // Mount routes
 app.use('/api/auth', require('./routes/auth'));
