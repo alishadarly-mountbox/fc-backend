@@ -5,6 +5,7 @@ require('dotenv').config();
 const path = require('path');
 const fs = require('fs');
 const User = require('./models/User');
+const cloudinary = require('cloudinary').v2;
 
 const app = express();
 const allowedOrigins = [
@@ -67,6 +68,11 @@ if (!fs.existsSync(uploadsDir)) {
 }
 app.use('/uploads', express.static(uploadsDir));
 
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET
+});
 
 // Import routes
 const authRoutes = require('./routes/auth');
