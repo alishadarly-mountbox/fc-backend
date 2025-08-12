@@ -36,8 +36,15 @@ app.get('/api/health', (req, res) => {
 
 const PORT = process.env.PORT || 5000;
 
-// MongoDB connection with error handling
-mongoose.connect(process.env.MONGO_URL)
+// MongoDB connection with retries and better options
+mongoose.connect(process.env.MONGO_URL, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    retryWrites: true,
+    w: 'majority',
+    serverSelectionTimeoutMS: 5000,
+    socketTimeoutMS: 45000,
+})
     .then(() => {
         console.log('Connected to MongoDB');
         app.listen(PORT, () => {
