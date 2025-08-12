@@ -12,7 +12,9 @@ const studentSchema = new mongoose.Schema({
     verified: { type: Boolean, default: false },
     verificationResult: { type: String, enum: ['success', 'failed', 'pending', 'manually_verified'], default: 'pending' },
     manuallyVerified: { type: Boolean, default: false },
-    manualVerificationDate: { type: Date }
+    manualVerificationDate: { type: Date },
+    capturedImage: { type: String }, // Path to captured verification image
+    verificationDate: { type: Date } // Date when verification was performed
 });
 
 module.exports = mongoose.model('Student', studentSchema);
